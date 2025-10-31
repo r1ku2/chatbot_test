@@ -7,7 +7,7 @@ app = Flask(__name__)
 # Watsonx の API 情報
 WATSONX_API_KEY = os.getenv("WATSONX_API_KEY")
 PROJECT_ID = os.getenv("WATSONX_PROJECT_ID")
-MODEL_ID = "ibm/granite-13b-chat-v2"
+MODEL_ID = "ibm/granite-4-h-small"
 GENERATION_URL = "https://us-south.ml.cloud.ibm.com/ml/v1/text/generation?version=2023-05-29"
 IAM_TOKEN_URL = "https://iam.cloud.ibm.com/identity/token"
 
