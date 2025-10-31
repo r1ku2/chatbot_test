@@ -4,11 +4,25 @@ import os
 
 app = Flask(__name__)
 
-# Watsonx APIエンドポイントと認証情報
-WATSONX_API_URL = "https://us-south.ml.cloud.ibm.com/ml/v1/text/generation"
+# Watsonx の API 情報
 WATSONX_API_KEY = os.getenv("WATSONX_API_KEY")
-PROJECT_ID = os.getenv("WATSONX_PROJECT_ID")   # ← プロジェクトIDを環境変数に追加
+PROJECT_ID = os.getenv("WATSONX_PROJECT_ID")
 MODEL_ID = "ibm/granite-13b-chat-v2"
+GENERATION_URL = "https://us-south.ml.cloud.ibm.com/ml/v1/text/generation"
+IAM_TOKEN_URL = "https://iam.cloud.ibm.com/identity/token"
+
+def get_iam_token():
+    """IBM Cloud IAM トークンを取得"""
+    data = {
+        "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
+        "apikey": WATSONX_API_KEY
+    }
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    response = requests.post(IAM_TOKEN_URL, data=data, headers=headers)
+    if response.status_code == 200:
+        return response.json()["access_token"]
+    else:
+        raise Exception(f"IAM token error: {response.text}")
 
 @app.route("/")
 def index():
@@ -18,14 +32,17 @@ def index():
 def chat():
     user_input = request.json.get("message", "")
 
+    # 認証トークン取得
+    access_token = get_iam_token()
+
     headers = {
-        "Authorization": f"Bearer {WATSONX_API_KEY}",
+        "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
     }
 
     payload = {
         "model_id": MODEL_ID,
-        "project_id": PROJECT_ID,  # ← プロジェクト連携ポイント
+        "project_id": PROJECT_ID,
         "input": user_input,
         "parameters": {
             "max_new_tokens": 200,
@@ -33,7 +50,7 @@ def chat():
         }
     }
 
-    response = requests.post(WATSONX_API_URL, headers=headers, json=payload)
+    response = requests.post(GENERATION_URL, headers=headers, json=payload)
 
     if response.status_code == 200:
         data = response.json()
@@ -41,3 +58,7 @@ def chat():
         return jsonify({"reply": output})
     else:
         return jsonify({"error": response.text}), response.status_code
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
