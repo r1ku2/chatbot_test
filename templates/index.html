@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Watsonx チャットボット</title>
+  <style>
+    body { font-family: sans-serif; margin: 40px; }
+    .chat-box { border: 1px solid #ccc; padding: 20px; height: 400px; overflow-y: scroll; }
+    .input-area { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Watsonx チャットボット</h2>
+  <div class="chat-box" id="chat-box"></div>
+  <div class="input-area">
+    <input type="text" id="message" placeholder="メッセージを入力..." style="width:80%;">
+    <button onclick="sendMessage()">送信</button>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const msg = document.getElementById("message").value;
+      if (!msg) return;
+      const chatBox = document.getElementById("chat-box");
+      chatBox.innerHTML += `<div><b>あなた:</b> ${msg}</div>`;
+      document.getElementById("message").value = "";
+
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg })
+      });
+      const data = await res.json();
+      chatBox.innerHTML += `<div><b>Watsonx:</b> ${data.reply || data.error}</div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+</body>
+</html>
